@@ -6,4 +6,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'WebTesting'
+rootProject.name = 'ui-visual-testing'

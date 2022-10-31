@@ -1,5 +1,0 @@
-# HTTrack Website Copier Cookie File
-# This file format is compatible with Netscape cookies
-.chartjs.org	TRUE	/	FALSE	1999999999	__cf_bm	mj2jSxOmeTPCbJkT21Sqs9boKFlE99KXdED0J.VhS24-1635078282-0-AXqoU1ShnOoEsFgpXMFOMTZltOpUFW8RZSsNfJ7aBxykMFtopVR/BHpxjOV0EyYSDJM2jAbyFYP/QotVNH+yOmo=
-www.chartjs.org	TRUE	/	FALSE	1999999999	SameSite	None
-

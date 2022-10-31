@@ -1,11 +1,13 @@
 package helpers;
 
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import com.github.romankh3.image.comparison.ImageComparison;
 import com.github.romankh3.image.comparison.model.ImageComparisonResult;
 import com.github.romankh3.image.comparison.model.ImageComparisonState;
 import com.github.romankh3.image.comparison.model.Rectangle;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import io.qameta.allure.Attachment;
 import io.qameta.allure.Step;
 import org.testng.annotations.BeforeMethod;
@@ -17,7 +19,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -28,40 +29,52 @@ import static com.codeborne.selenide.Screenshots.takeScreenShotAsImage;
 import static com.codeborne.selenide.Selenide.$x;
 import static com.github.romankh3.image.comparison.ImageComparisonUtil.readImageFromResources;
 import static com.github.romankh3.image.comparison.ImageComparisonUtil.saveImage;
-import static helpers.Methods.setupBrowser;
 import static org.testng.Assert.assertEquals;
 
 public class ScreensBrowser {
 
     final static String S = File.separator;
     final static String SCREENS_PATH = "src" + S + "test" + S + "resources" + S + "screens" + S;
+    final static String PROJ_PATH = new File("").getAbsolutePath();
 
     @BeforeMethod(alwaysRun = true, description = "Browser Setup")
-    public void setup() throws MalformedURLException {
-        //For screens always need to use headless, otherwise screens will be of a browser viewport instead of full page
-        setupBrowser(true);
+    public void setup() {
+        WebDriverManager.firefoxdriver().setup();
+        Configuration.browser = "firefox";
+        Configuration.headless = true;
+    }
+
+    @Step("Open site home page")
+    public static void openMainPage() {
+        Selenide.open("file://" + PROJ_PATH + S + "src" + S + "test" + S + "resources" + S +
+                "site" + S + "demo.seleniumeasy.com" + S + "index.html");
     }
 
     @Step("Save screenshot to file")
     public void saveScreen(String className, String methodName, SelenideElement elem) {
-        //If SelenideElement is null - save image of the whole page, else of the element
+        // If SelenideElement is null - save image of the whole page, else of the element
         saveImage(new File(SCREENS_PATH + className + S + methodName + ".png"),
                 takeScreenShotAsImage(Objects.requireNonNullElseGet(elem, () -> $x("/html"))));
     }
 
     @Step("Compare current page screenshot with saved file")
     public void assertPage(String className, String methodName) {
-        assertScreens(className, methodName, null, Collections.emptyList());
+        assertScreens(className, methodName, null, Collections.emptyList(), 0);
     }
 
     @Step("Compare area of the current page screenshot with saved file")
     public void assertPageArea(String className, String methodName, SelenideElement elem) {
-        assertScreens(className, methodName, elem, Collections.emptyList());
+        assertScreens(className, methodName, elem, Collections.emptyList(), 0);
     }
 
     @Step("Compare current page screenshot (excluding ignored areas) with saved file")
     public void assertPageWIgnore(String className, String methodName, List<Rectangle> ignores) {
-        assertScreens(className, methodName, null, ignores);
+        assertScreens(className, methodName, null, ignores, 0);
+    }
+
+    @Step("Compare current page screenshot with {2}% difference")
+    public void assertPageWFailPercentage(String className, String methodName, double failPercent) {
+        assertScreens(className, methodName, null, Collections.emptyList(), failPercent);
     }
 
     @Step("Calculate {0} coordinates for adding to ignore list")
@@ -73,25 +86,28 @@ public class ScreensBrowser {
         return new Rectangle(minX, minY, maxX, maxY);
     }
 
-    private void assertScreens(String className, String methodName, SelenideElement elem, List<Rectangle> ignores) {
-        //Fluent wait for page to fully load using JS readyState
+    private void assertScreens(String className, String methodName, SelenideElement elem, List<Rectangle> ignores, double failPercent) {
+        // Fluent wait for page to fully load using JS readyState
         Methods.waitForSuccess(()->
                         assertEquals(Selenide.executeJavaScript("return document.readyState").toString(), "complete"),
                 10, 200);
 
-        //Checks if screen file exists. If not - create a new one
+        // Checks if screen file exists. If not - create a new one
         if(!new File(SCREENS_PATH + className + S + methodName + ".png").exists())
             saveScreen(className, methodName, elem);
 
         BufferedImage expected = readImageFromResources(SCREENS_PATH + className + S + methodName + ".png");
-        //If SelenideElement is null - take screen of the whole page, else of the element
+        // If SelenideElement is null - take screen of the whole page, else of the element
         BufferedImage actual = takeScreenShotAsImage(Objects.requireNonNullElseGet(elem, () -> $x("/html")));
 
         ImageComparisonResult result = new ImageComparison(expected, actual)
-                //Enable and set opacity for ignored areas (will be displayed as green on result image)
+                // Enable and set opacity for ignored areas (will be displayed as green on result image)
                 .setDrawExcludedRectangles(true).setExcludedRectangleFilling(true, 50).setExcludedAreas(ignores)
-                //Set opacity for difference areas (will be displayed as red on result image)
-                .setDifferenceRectangleFilling(true, 50).compareImages();
+                // Allowed percentage of difference for failure
+                .setAllowingPercentOfDifferentPixels(failPercent)
+                // Set opacity for difference areas (will be displayed as red on result image)
+                .setDifferenceRectangleFilling(true, 50)
+                .compareImages();
 
         if(result.getImageComparisonState() == ImageComparisonState.MATCH) {
             attachPng("Result", result.getResult());
