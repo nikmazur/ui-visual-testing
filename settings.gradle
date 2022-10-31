@@ -1,1 +1,9 @@
-rootProject.name = 'WebTesting'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'ui-visual-testing'
