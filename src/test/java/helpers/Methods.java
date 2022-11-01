@@ -1,27 +1,21 @@
 package helpers;
 
-import io.qameta.allure.Step;
-
 public class Methods {
 
-    @Step("Attempt multiple times until success")
     public static void waitForSuccess(Runnable run, int steps, int pause) {
-        for(int i = 0; i < steps; i++) {
+        boolean success = false;
+        for(int i = 0; i < steps - 1; i++) {
             try {
-                execStep(i, run);
+                run.run();
+                success = true;
                 break;
             } catch (Exception | AssertionError ae) {
                 try {
                     Thread.sleep(pause);
-                } catch (InterruptedException ignored) {
-                }
+                } catch (InterruptedException ignored) {}
             }
         }
-    }
-
-    @Step("Step {i}")
-    private static void execStep(int i, Runnable runnable) {
-        runnable.run();
+        if(!success) run.run();
     }
 
 }
