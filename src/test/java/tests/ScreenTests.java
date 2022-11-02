@@ -50,9 +50,9 @@ public class ScreenTests extends ScreensBrowser {
     }
 
     @Test(description = "Test with allowed percentage of differences")
-    @Description("This test uses same screenshot as editedImage test, but passes because of allowed percentage of differences (20%)")
+    @Description("This test uses same screenshot as editedImage test, but passes because of allowed amount of different pixels.")
     public void failPercentage() {
         openMainPage();
-        assertPageWFailPercentage(CLASSNAME, new Object(){}.getClass().getEnclosingMethod().getName(), 20);
+        assertPageWFailPixels(CLASSNAME, new Object(){}.getClass().getEnclosingMethod().getName(), 300_000);
     }
 }

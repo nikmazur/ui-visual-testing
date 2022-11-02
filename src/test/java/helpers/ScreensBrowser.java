@@ -8,6 +8,7 @@ import com.github.romankh3.image.comparison.model.ImageComparisonResult;
 import com.github.romankh3.image.comparison.model.ImageComparisonState;
 import com.github.romankh3.image.comparison.model.Rectangle;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Attachment;
 import io.qameta.allure.Step;
 import org.testng.annotations.BeforeMethod;
@@ -57,6 +58,15 @@ public class ScreensBrowser {
                 takeScreenShotAsImage(Objects.requireNonNullElseGet(elem, () -> $x("/html"))));
     }
 
+    @Step("Calculate {0} coordinates for adding to ignore list")
+    public Rectangle calcElemLocation(String elemName, SelenideElement elem) {
+        int minX = elem.getRect().getX();
+        int minY = elem.getRect().getY();
+        int maxX = minX + elem.getRect().getWidth();
+        int maxY = minY + elem.getRect().getHeight();
+        return new Rectangle(minX, minY, maxX, maxY);
+    }
+
     @Step("Compare current page screenshot with saved file")
     public void assertPage(String className, String methodName) {
         assertScreens(className, methodName, null, Collections.emptyList(), 0);
@@ -72,21 +82,12 @@ public class ScreensBrowser {
         assertScreens(className, methodName, null, ignores, 0);
     }
 
-    @Step("Compare current page screenshot with {2}% difference")
-    public void assertPageWFailPercentage(String className, String methodName, double failPercent) {
-        assertScreens(className, methodName, null, Collections.emptyList(), failPercent);
+    @Step("Compare current page screenshot with {2} pixels ignored")
+    public void assertPageWFailPixels(String className, String methodName, long failPixels) {
+        assertScreens(className, methodName, null, Collections.emptyList(), failPixels);
     }
 
-    @Step("Calculate {0} coordinates for adding to ignore list")
-    public Rectangle calcElemLocation(String elemName, SelenideElement elem) {
-        int minX = elem.getRect().getX();
-        int minY = elem.getRect().getY();
-        int maxX = minX + elem.getRect().getWidth();
-        int maxY = minY + elem.getRect().getHeight();
-        return new Rectangle(minX, minY, maxX, maxY);
-    }
-
-    private void assertScreens(String className, String methodName, SelenideElement elem, List<Rectangle> ignores, double failPercent) {
+    private void assertScreens(String className, String methodName, SelenideElement elem, List<Rectangle> ignores, long failPixels) {
         // Fluent wait for page to fully load using JS readyState
         Methods.waitForSuccess(()->
                         assertEquals(Selenide.executeJavaScript("return document.readyState").toString(), "complete"),
@@ -99,24 +100,44 @@ public class ScreensBrowser {
         BufferedImage expected = readImageFromResources(SCREENS_PATH + className + S + methodName + ".png");
         // If SelenideElement is null - take screen of the whole page, else of the element
         BufferedImage actual = takeScreenShotAsImage(Objects.requireNonNullElseGet(elem, () -> $x("/html")));
+        long totalPixels  = getPageTotalPixels();
 
-        ImageComparisonResult result = new ImageComparison(expected, actual)
-                // Enable and set opacity for ignored areas (will be displayed as green on result image)
-                .setDrawExcludedRectangles(true).setExcludedRectangleFilling(true, 50).setExcludedAreas(ignores)
-                // Allowed percentage of difference for failure
-                .setAllowingPercentOfDifferentPixels(failPercent)
-                // Set opacity for difference areas (will be displayed as red on result image)
-                .setDifferenceRectangleFilling(true, 50)
-                .compareImages();
+        ImageComparisonResult result = getResult(expected, actual, ignores, (failPixels * 100.0) / totalPixels);
 
         if(result.getImageComparisonState() == ImageComparisonState.MATCH) {
             attachPng("Result", result.getResult());
         } else {
-            attachPng("Expected", result.getExpected());
-            attachPng("Actual", result.getActual());
-            attachGif(methodName, result);
+            attachFailResults(methodName, result, totalPixels);
         }
         assertEquals(result.getImageComparisonState(), ImageComparisonState.MATCH);
+    }
+
+    private long getPageTotalPixels() {
+        Long width = Selenide.executeJavaScript("return document.body.clientWidth;");
+        Long height = Selenide.executeJavaScript("return document.body.clientHeight;");
+        return Objects.requireNonNull(width) * Objects.requireNonNull(height);
+    }
+
+    private ImageComparisonResult getResult(BufferedImage expected, BufferedImage actual, List<Rectangle> ignores, double percentage) {
+        return new ImageComparison(expected, actual)
+                // Enable and set opacity for ignored areas (will be displayed as green on result image)
+                .setDrawExcludedRectangles(true).setExcludedRectangleFilling(true, 50).setExcludedAreas(ignores)
+                // Allowed percentage of difference for failure
+                .setAllowingPercentOfDifferentPixels(percentage)
+                // Set opacity for difference areas (will be displayed as red on result image)
+                .setDifferenceRectangleFilling(true, 50)
+                .compareImages();
+    }
+
+    private void attachFailResults(String methodName, ImageComparisonResult result, long totalPixels) {
+        // getDifferencePercent is calculated incorrectly, for future use
+        // TODO https://github.com/romankh3/image-comparison/issues/233
+        Allure.addAttachment("Failed Percent", result.getDifferencePercent() + "%");
+        Allure.addAttachment("Failed Pixels", String.valueOf(
+                (long) (totalPixels * (result.getDifferencePercent() / 100.0))));
+        attachPng("Expected", result.getExpected());
+        attachPng("Actual", result.getActual());
+        attachGif(methodName, result);
     }
 
     @Attachment(value = "{0}", type = "image/png")
