@@ -42,6 +42,7 @@ public class ScreensBrowser {
     public void setup() {
         WebDriverManager.firefoxdriver().setup();
         Configuration.browser = "firefox";
+        // Browser needs to be headless to avoid screenshotting viewport instead of the full page
         Configuration.headless = true;
     }
 
@@ -100,44 +101,41 @@ public class ScreensBrowser {
         BufferedImage expected = readImageFromResources(SCREENS_PATH + className + S + methodName + ".png");
         // If SelenideElement is null - take screen of the whole page, else of the element
         BufferedImage actual = takeScreenShotAsImage(Objects.requireNonNullElseGet(elem, () -> $x("/html")));
-        long totalPixels  = getPageTotalPixels();
 
-        ImageComparisonResult result = getResult(expected, actual, ignores, (failPixels * 100.0) / totalPixels);
+        ImageComparisonResult result = getResult(expected, actual, ignores, failPixels);
 
-        if(result.getImageComparisonState() == ImageComparisonState.MATCH) {
+        if(result.getImageComparisonState() == ImageComparisonState.MATCH)
             attachPng("Result", result.getResult());
-        } else {
-            attachFailResults(methodName, result, totalPixels);
-        }
+        else
+            attachFailResults(className, methodName, result);
+
         assertEquals(result.getImageComparisonState(), ImageComparisonState.MATCH);
     }
 
-    private long getPageTotalPixels() {
-        Long width = Selenide.executeJavaScript("return document.body.clientWidth;");
-        Long height = Selenide.executeJavaScript("return document.body.clientHeight;");
-        return Objects.requireNonNull(width) * Objects.requireNonNull(height);
-    }
-
-    private ImageComparisonResult getResult(BufferedImage expected, BufferedImage actual, List<Rectangle> ignores, double percentage) {
+    private ImageComparisonResult getResult(BufferedImage expected, BufferedImage actual, List<Rectangle> ignores, long failPixels) {
         return new ImageComparison(expected, actual)
                 // Enable and set opacity for ignored areas (will be displayed as green on result image)
                 .setDrawExcludedRectangles(true).setExcludedRectangleFilling(true, 50).setExcludedAreas(ignores)
-                // Allowed percentage of difference for failure
-                .setAllowingPercentOfDifferentPixels(percentage)
+                // Allowed percentage of difference for failure. If failPixels != 0 calculate percentage
+                .setAllowingPercentOfDifferentPixels(failPixels == 0 ? 0 : (failPixels * 100.0) / getTotalPixels(actual))
                 // Set opacity for difference areas (will be displayed as red on result image)
                 .setDifferenceRectangleFilling(true, 50)
                 .compareImages();
     }
 
-    private void attachFailResults(String methodName, ImageComparisonResult result, long totalPixels) {
+    private void attachFailResults(String className, String methodName, ImageComparisonResult result) {
         // getDifferencePercent is calculated incorrectly, for future use
         // TODO https://github.com/romankh3/image-comparison/issues/233
-        Allure.addAttachment("Failed Percent", result.getDifferencePercent() + "%");
+        Allure.addAttachment("Failed Percent", result.getDifferencePercent() + " %");
         Allure.addAttachment("Failed Pixels", String.valueOf(
-                (long) (totalPixels * (result.getDifferencePercent() / 100.0))));
+                (long) (getTotalPixels(result.getActual()) * (result.getDifferencePercent() / 100.0))));
         attachPng("Expected", result.getExpected());
         attachPng("Actual", result.getActual());
-        attachGif(methodName, result);
+        attachGif(className, methodName, result);
+    }
+
+    private long getTotalPixels(BufferedImage img) {
+        return (long) img.getWidth() * img.getHeight();
     }
 
     @Attachment(value = "{0}", type = "image/png")
@@ -154,8 +152,8 @@ public class ScreensBrowser {
     }
 
     @Attachment(value = "GIF", type = "image/gif")
-    private static byte[] attachGif(String methodName, ImageComparisonResult res) {
-        File gif = new File("build" + S + "resources" + S + "test" + S + methodName + ".gif");
+    private static byte[] attachGif(String className, String methodName, ImageComparisonResult res) {
+        File gif = new File("build" + S + "resources" + S + "test" + S + className + S + methodName + ".gif");
         gif.getParentFile().mkdirs();
         byte[] gifInByte = new byte[0];
         try {
