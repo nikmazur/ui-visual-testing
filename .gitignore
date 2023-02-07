@@ -14,7 +14,6 @@
 
 # Gradle
 .gradle/
-gradle
 /build/
 
 # Allure
@@ -26,7 +25,3 @@ allure-results/
 
 # Default folder for compilation files in IDEA
 out/
-
-# Folder for Webdriver screenshots & downloads
-bin/screenshots
-bin/download
