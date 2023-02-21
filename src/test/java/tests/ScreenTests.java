@@ -16,19 +16,19 @@ import static com.codeborne.selenide.Selenide.$x;
 @Feature("Testing using screenshots")
 @Test(groups = "Screens")
 public class ScreenTests extends ScreensBrowser {
-    private final String CLASSNAME = this.getClass().getSimpleName();
+    private final String CLASS_NAME = this.getClass().getSimpleName();
 
     @Test(description = "Selenium Easy home page")
     public void selEasyHomePage() {
         openMainPage();
-        assertPage(CLASSNAME, new Object(){}.getClass().getEnclosingMethod().getName());
+        assertPage(CLASS_NAME, new Object(){}.getClass().getEnclosingMethod().getName());
     }
 
     @Test(description = "Specific area on a page (banner)")
     @Description("Compare screens of a specific page area")
     public void siteBanner() {
         openMainPage();
-        assertPageArea(CLASSNAME, new Object(){}.getClass().getEnclosingMethod().getName(),
+        assertPageArea(CLASS_NAME, new Object(){}.getClass().getEnclosingMethod().getName(),
                 $x("//div[@role='listbox']"));
     }
 
@@ -36,7 +36,7 @@ public class ScreenTests extends ScreensBrowser {
     @Description("Failing test where the expected screen has been manually edited in paint")
     public void editedImage() {
         openMainPage();
-        assertPage(CLASSNAME, new Object(){}.getClass().getEnclosingMethod().getName());
+        assertPage(CLASS_NAME, new Object(){}.getClass().getEnclosingMethod().getName());
     }
 
     @Test(description = "Page assert with ignored area")
@@ -47,13 +47,13 @@ public class ScreenTests extends ScreensBrowser {
         openMainPage();
         List<Rectangle> ignore = Collections.singletonList(
                 calcElemLocation("Banner", $x("//div[@role='listbox']")));
-        assertPageWIgnore(CLASSNAME, new Object(){}.getClass().getEnclosingMethod().getName(), ignore);
+        assertPageWIgnore(CLASS_NAME, new Object(){}.getClass().getEnclosingMethod().getName(), ignore);
     }
 
     @Test(description = "Test with allowed percentage of differences")
     @Description("This test uses same screenshot as editedImage test, but passes because of allowed amount of different pixels.")
     public void failPercentage() {
         openMainPage();
-        assertPageWFailPixels(CLASSNAME, new Object(){}.getClass().getEnclosingMethod().getName(), 300_000);
+        assertPageWFailPixels(CLASS_NAME, new Object(){}.getClass().getEnclosingMethod().getName(), 300_000);
     }
 }

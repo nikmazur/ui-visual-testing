@@ -25,6 +25,8 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.codeborne.selenide.Screenshots.takeScreenShotAsImage;
 import static com.codeborne.selenide.Selenide.$x;
@@ -34,9 +36,9 @@ import static org.testng.Assert.assertEquals;
 
 public class ScreensBrowser {
 
-    final static String S = File.separator;
-    final static String SCREENS_PATH = "src" + S + "test" + S + "resources" + S + "screens" + S;
-    final static String PROJ_PATH = new File("").getAbsolutePath();
+    static final String S = File.separator;
+    static final String SCREENS_PATH = "src" + S + "test" + S + "resources" + S + "screens" + S;
+    static final String PROJ_PATH = new File("").getAbsolutePath();
 
     @BeforeMethod(alwaysRun = true, description = "Browser Setup")
     public void setup() {
@@ -147,7 +149,9 @@ public class ScreensBrowser {
             stream.flush();
             imageInByte = stream.toByteArray();
             stream.close();
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            Logger.getGlobal().log(Level.SEVERE, e.getMessage());
+        }
         return imageInByte;
     }
 
@@ -166,7 +170,7 @@ public class ScreensBrowser {
             output.close();
             gifInByte = Files.readAllBytes(Paths.get(gif.toURI()));
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.getGlobal().log(Level.SEVERE, e.getMessage());
         }
         return gifInByte;
     }

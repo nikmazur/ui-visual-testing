@@ -1,5 +1,7 @@
 package helpers;
 
+import java.util.concurrent.locks.LockSupport;
+
 public class Methods {
 
     public static void waitForSuccess(Runnable run, int steps, int pause) {
@@ -10,9 +12,7 @@ public class Methods {
                 success = true;
                 break;
             } catch (Exception | AssertionError ae) {
-                try {
-                    Thread.sleep(pause);
-                } catch (InterruptedException ignored) {}
+                LockSupport.parkNanos(pause);
             }
         }
         if(!success) run.run();
