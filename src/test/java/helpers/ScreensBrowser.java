@@ -15,7 +15,6 @@ import org.testng.annotations.BeforeMethod;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageOutputStream;
-import javax.imageio.stream.ImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -100,11 +99,11 @@ public class ScreensBrowser {
         if(!new File(SCREENS_PATH + className + S + methodName + ".png").exists())
             saveScreen(className, methodName, elem);
 
-        BufferedImage expected = readImageFromResources(SCREENS_PATH + className + S + methodName + ".png");
+        var expected = readImageFromResources(SCREENS_PATH + className + S + methodName + ".png");
         // If SelenideElement is null - take screen of the whole page, else of the element
-        BufferedImage actual = takeScreenShotAsImage(Objects.requireNonNullElseGet(elem, () -> $x("/html")));
+        var actual = takeScreenShotAsImage(Objects.requireNonNullElseGet(elem, () -> $x("/html")));
 
-        ImageComparisonResult result = getResult(expected, actual, ignores, failPixels);
+        var result = getResult(expected, actual, ignores, failPixels);
 
         if(result.getImageComparisonState() == ImageComparisonState.MATCH)
             attachPng("Result", result.getResult());
@@ -142,36 +141,36 @@ public class ScreensBrowser {
 
     @Attachment(value = "{0}", type = "image/png")
     private static byte[] attachPng(String fileName, BufferedImage img) {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        byte[] imageInByte = new byte[0];
+        var stream = new ByteArrayOutputStream();
+        var byteImage = new byte[0];
         try {
             ImageIO.write(img, "png", stream);
             stream.flush();
-            imageInByte = stream.toByteArray();
+            byteImage = stream.toByteArray();
             stream.close();
         } catch (IOException e) {
             Logger.getGlobal().log(Level.SEVERE, e.getMessage());
         }
-        return imageInByte;
+        return byteImage;
     }
 
     @Attachment(value = "GIF", type = "image/gif")
     private static byte[] attachGif(String className, String methodName, ImageComparisonResult res) {
-        File gif = new File("build" + S + "resources" + S + "test" + S + className + S + methodName + ".gif");
+        var gif = new File("build" + S + "resources" + S + "test" + S + className + S + methodName + ".gif");
         gif.getParentFile().mkdirs();
-        byte[] gifInByte = new byte[0];
+        var byteGif = new byte[0];
         try {
-            ImageOutputStream output = new FileImageOutputStream(gif);
-            GifSequenceWriter writer = new GifSequenceWriter(output, BufferedImage.TYPE_INT_ARGB, 1000, true);
+            var output = new FileImageOutputStream(gif);
+            var writer = new GifSequenceWriter(output, BufferedImage.TYPE_INT_ARGB, 1000, true);
             writer.writeToSequence(res.getExpected());
             writer.writeToSequence(res.getActual());
             writer.writeToSequence(res.getResult());
             writer.close();
             output.close();
-            gifInByte = Files.readAllBytes(Paths.get(gif.toURI()));
+            byteGif = Files.readAllBytes(Paths.get(gif.toURI()));
         } catch (IOException e) {
             Logger.getGlobal().log(Level.SEVERE, e.getMessage());
         }
-        return gifInByte;
+        return byteGif;
     }
 }

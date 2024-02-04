@@ -40,9 +40,10 @@ public class ScreenTests extends ScreensBrowser {
     }
 
     @Test(description = "Page assert with ignored area")
-    @Description("The expected screen has been edited in paint by adding a blue line. " +
-            "However part of the line is over the ignored banner area, so it is not marked as difference. " +
-            "The remaining part of the line is marked as different, causing the test to fail.")
+    @Description("""
+            The expected screen has been edited in paint by adding a blue line.
+            However part of the line is over the ignored banner area, so it is not marked as difference.
+            The remaining part of the line is marked as different, causing the test to fail.""")
     public void pageWIgnoredArea() {
         openMainPage();
         List<Rectangle> ignore = Collections.singletonList(
