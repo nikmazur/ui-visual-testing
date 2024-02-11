@@ -32,8 +32,16 @@ public class ScreenTests extends ScreensBrowser {
                 $x("//div[@role='listbox']"));
     }
 
+    @Test(description = "Home page with multiple resolutions")
+    @Description("Compare screens with multiple custom resolutions (browser is resized for each resolution)")
+    public void multipleResolutions() {
+        openMainPage();
+        assertPageWCustomResolutions(CLASS_NAME, new Object(){}.getClass().getEnclosingMethod().getName(),
+                List.of("360x800", "1280x720", "1920x1080"));
+    }
+
     @Test(description = "Failing test with edited screen")
-    @Description("Failing test where the expected screen has been manually edited in paint")
+    @Description("Failing test where the expected screen has been manually edited in Paint")
     public void editedImage() {
         openMainPage();
         assertPage(CLASS_NAME, new Object(){}.getClass().getEnclosingMethod().getName());
