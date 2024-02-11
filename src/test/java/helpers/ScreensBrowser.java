@@ -46,11 +46,8 @@ public class ScreensBrowser {
 
     @BeforeMethod(alwaysRun = true, description = "Browser Setup")
     public void setup() {
-        FirefoxOptions options = new FirefoxOptions();
-        options.addArguments("-headless");
-        options.addArguments("-width=1366");
-        options.addArguments("-height=768");
-        WebDriverRunner.setWebDriver(new FirefoxDriver(options));
+        WebDriverRunner.setWebDriver(new FirefoxDriver(
+                new FirefoxOptions().addArguments("-headless", "-width=1366", "-height=768")));
     }
 
     @AfterMethod(alwaysRun = true, description = "Close Browser")
