@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.codeborne.selenide.Selenide.$x;
+import static helpers.PageAsserts.*;
 
 @Epic("Web Testing")
 @Feature("Testing using screenshots")
@@ -37,7 +38,7 @@ public class ScreenTests extends ScreensBrowser {
     public void multipleResolutions() {
         openMainPage();
         assertPageWCustomResolutions(CLASS_NAME, new Object(){}.getClass().getEnclosingMethod().getName(),
-                List.of("360x800", "1280x720", "1920x1080"));
+                List.of("360x800", "1024x576", "1920x1080", "3840x2160"));
     }
 
     @Test(description = "Failing test with edited screen")
