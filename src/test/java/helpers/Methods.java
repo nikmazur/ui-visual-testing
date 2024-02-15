@@ -14,8 +14,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -91,17 +89,17 @@ public class Methods {
             stream.flush();
             byteImage = stream.toByteArray();
             stream.close();
-            // Print image link to console
-            System.out.println(fileName + ":");
-            if(fileName.contains("Screenshot") || fileName.contains("Expected")) {
-                System.out.println(new URI(filePath));
-            } else {
-                var imageFile = new File(filePath);
-                saveImage(imageFile, img);
-                System.out.println(new URI(imageFile.getAbsolutePath()));
-            }
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             Logger.getGlobal().log(Level.SEVERE, e.getMessage());
+        }
+        // Print image link to console
+        System.out.println(fileName + ":");
+        if(fileName.contains("Screenshot") || fileName.contains("Expected")) {
+            System.out.println(new File(filePath).toURI());
+        } else {
+            var imageFile = new File(filePath);
+            saveImage(imageFile, img);
+            System.out.println(imageFile.toURI());
         }
         return byteImage;
     }
@@ -125,7 +123,7 @@ public class Methods {
         }
         // Print link to GIF in console
         System.out.println("Differences " + fileName + ":");
-        System.out.println(gif.getAbsolutePath());
+        System.out.println(gif.toURI());
         return byteGif;
     }
 
